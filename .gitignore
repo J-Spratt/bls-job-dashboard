@@ -1,0 +1,6 @@
+# Ignore secret keys and data cache
+secrets.toml
+bls_clean_2024_2025.csv
+__pycache__/
+.env
+*.pyc
