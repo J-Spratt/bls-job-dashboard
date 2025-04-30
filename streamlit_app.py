@@ -13,20 +13,20 @@ from datetime import datetime, timedelta
 import logging
 
 # --- Current Time Context ---
-# Current time is Sunday, April 6, 2025 at 12:48:45 AM CDT (Valparaiso, Indiana).
+# Current time is Sunday, April 6, 2025 at 12:48:45 AM CDT.
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- Optional Cache Deletion (Comment out if not needed on every run) ---
-# if os.path.exists("bls_employment_data.csv"):
-#     try:
-#         os.remove("bls_employment_data.csv")
-#         logging.info("Cache file 'bls_employment_data.csv' deleted.")
-#     except Exception as e:
-#         logging.error(f"Error deleting cache file: {e}")
-# else:
-#     logging.info("Cache file 'bls_employment_data.csv' not found, nothing to delete.")
+if os.path.exists("bls_employment_data.csv"):
+    try:
+        os.remove("bls_employment_data.csv")
+        logging.info("Cache file 'bls_employment_data.csv' deleted.")
+    except Exception as e:
+        logging.error(f"Error deleting cache file: {e}")
+else:
+    logging.info("Cache file 'bls_employment_data.csv' not found, nothing to delete.")
 
 # ---------------------------
 # SETUP
