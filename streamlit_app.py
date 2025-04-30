@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import logging
 
 # --- Current Time Context ---
-# Current time is Sunday, April 6, 2025 at 12:48:45 AM CDT.
+# Current time is Sunday, April 6, 2025 at 12:48:45 AM CDT (Valparaiso, Indiana).
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
