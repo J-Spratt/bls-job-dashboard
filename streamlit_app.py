@@ -91,13 +91,13 @@ national_industry_map = {
     "CEU0000000001": "Total Nonfarm - National",
     "CEU0500000001": "Total Private - National",
     "CEU06000000001": "Goods-Producing - National",
-    "CEU070000000001": "Service-Providing - National",
+    "CEU07000000001": "Service-Providing - National",
     "CEU08000000001": "Private Service-Providing - National",
     "CEU10000000001": "Mining and Logging - National",
     "CEU20000000001": "Construction - National",
     "CEU30000000001": "Manufacturing - National",
     "CEU40000000001": "Trade, Transportation, and Utilities - National",
-    "CEU41000000001": "Wholesale Trade - National",
+    "CEU410000000001": "Wholesale Trade - National",
     "CEU420000000001": "Retail Trade - National",
     "CEU430000000001": "Transportation and Warehousing - National",
     "CEU44000000001": "Utilities - National",
@@ -125,7 +125,6 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
     )
     headers = {"Content-type": "application/json"}
     all_series_data = []
-    num_series = len(series_ids_func)
     batch_size = 50
     max_batches = (num_series + batch_size - 1) // batch_size
 
@@ -285,11 +284,11 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
 st.sidebar.subheader("Data Cache Status")
 csv_file = "bls_employment_data.csv"
 cache_expiry_days = 1  # Cache expires daily
-force_refresh = st.sidebar.checkbox("Force Data Refresh", value=False) # Add a force refresh
+force_refresh = st.sidebar.checkbox("Force Data Refresh", value=False)  # Add a force refresh
 
 df = None
 try:
-    if os.path.exists(csv_file) and not force_refresh: # check force refresh
+    if os.path.exists(csv_file) and not force_refresh:  # check force refresh
         cache_info = os.stat(csv_file)
         cache_age_seconds = time.time() - cache_info.st_mtime
         cache_age_days = cache_age_seconds / (60 * 60 * 24)
@@ -311,9 +310,16 @@ try:
                     os.remove(csv_file)
                     df = None
                 else:
-                    max_cached_date = df["date"].max().date()
-                    logging.info(f"Cache loaded successfully. Last data point: {max_cached_date}")
-                    st.sidebar.success(f"Using cached data.\nLast data: {max_cached_date}")
+                    # Validate the date column
+                    if df['date'].dtype != 'datetime64[ns]':
+                        logging.warning(f"Cache file '{csv_file}' has an invalid date column type. Deleting.")
+                        st.sidebar.warning(f"Cache file has an invalid date column. Fetching fresh data.")
+                        os.remove(csv_file)
+                        df = None
+                    else:
+                        max_cached_date = df["date"].max().date()
+                        logging.info(f"Cache loaded successfully. Last data point: {max_cached_date}")
+                        st.sidebar.success(f"Using cached data.\nLast data: {max_cached_date}")
         else:
             logging.warning(
                 f"Cache is older than {cache_expiry_days} days ({cache_age_days:.1f} days). Fetching fresh data."
@@ -347,8 +353,9 @@ except Exception as e:
     df = None
 
 
+
 # --- API Data Fetching Logic ---
-if df is None or force_refresh: # add force refresh
+if df is None or force_refresh:  # add force refresh
     logging.info("df is None, proceeding with API fetch.")
     st.sidebar.markdown("---")
     st.sidebar.info("Fetching data from BLS API...")
@@ -403,6 +410,7 @@ if df is None or force_refresh: # add force refresh
         st.error("Data fetching failed. Cannot display dashboard. Please check logs or try again later.")
         logging.error("API fetch resulted in no usable data (df is None or empty). Stopping.")
         st.stop()
+
 
 
 # ---------------------------
@@ -575,8 +583,7 @@ def add_forecast(df_subset, months=6):
 
         future_data = {
             "date": future_dates,
-            "value": future_preds,
-            "label": label_name,
+            "value": future_preds,"label": label_name,
             "forecast": True,
             "series_id": df_subset["series_id"].iloc[0] if 'series_id'in df_subset.columns else None,
             "state_full": df_subset["state_full"].iloc[0]
