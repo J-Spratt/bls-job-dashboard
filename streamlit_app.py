@@ -3,7 +3,7 @@ import traceback
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go # Needed for more customization if required
+import plotly.graph_objects as go  # Needed for more customization if required
 import requests
 import json
 from sklearn.linear_model import LinearRegression
@@ -35,8 +35,10 @@ st.set_page_config(layout="wide", page_title="U.S. Job Trends Dashboard")
 
 # Add a title and a short description
 st.markdown("<h1 style='text-align: center;'>U.S. Job Trends Dashboard</h1>", unsafe_allow_html=True)
-st.caption("Visualizing Total Nonfarm Employment trends and forecasts by state and selected national industries using BLS data. "
-           "Forecasts are based on simple linear projections.")
+st.caption(
+    "Visualizing Total Nonfarm Employment trends and forecasts by state and selected national industries using BLS data. "
+    "Forecasts are based on simple linear projections."
+)
 
 # --- Load BLS API Key ---
 api_key = None
@@ -112,24 +114,24 @@ state_series_map = {
 national_industry_map = {
     "CEU0000000001": "Total Nonfarm - National",
     "CEU0500000001": "Total Private - National",
-    "CEU0600000001": "Goods-Producing - National",
-    "CEU0700000001": "Service-Providing - National",
-    "CEU0800000001": "Private Service-Providing - National",
-    "CEU1000000001": "Mining and Logging - National",
-    "CEU2000000001": "Construction - National",
-    "CEU3000000001": "Manufacturing - National",
-    "CEU4000000001": "Trade, Transportation, and Utilities - National",
-    "CEU4100000001": "Wholesale Trade - National",
-    "CEU4200000001": "Retail Trade - National",
-    "CEU4300000001": "Transportation and Warehousing - National",
-    "CEU4400000001": "Utilities - National",
-    "CEU5000000001": "Information - National",
-    "CEU5500000001": "Financial Activities - National",
-    "CEU6000000001": "Professional and Business Services - National",
-    "CEU6500000001": "Education and Health Services - National",
-    "CEU7000000001": "Leisure and Hospitality - National",
-    "CEU8000000001": "Other Services - National",
-    "CEU9000000001": "Government - National"
+    "CEU06000000001": "Goods-Producing - National",
+    "CEU07000000001": "Service-Providing - National",
+    "CEU08000000001": "Private Service-Providing - National",
+    "CEU10000000001": "Mining and Logging - National",
+    "CEU20000000001": "Construction - National",
+    "CEU30000000001": "Manufacturing - National",
+    "CEU40000000001": "Trade, Transportation, and Utilities - National",
+    "CEU41000000001": "Wholesale Trade - National",
+    "CEU42000000001": "Retail Trade - National",
+    "CEU43000000001": "Transportation and Warehousing - National",
+    "CEU44000000001": "Utilities - National",
+    "CEU50000000001": "Information - National",
+    "CEU55000000001": "Financial Activities - National",
+    "CEU60000000001": "Professional and Business Services - National",
+    "CEU65000000001": "Education and Health Services - National",
+    "CEU70000000001": "Leisure and Hospitality - National",
+    "CEU80000000001": "Other Services - National",
+    "CEU90000000001": "Government - National",
 }
 series_ids = list(state_series_map.keys()) + list(national_industry_map.keys())
 all_series_map = {**state_series_map, **national_industry_map}
@@ -142,7 +144,9 @@ all_series_map = {**state_series_map, **national_industry_map}
 def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_func):
     """Fetches data from BLS API v2 in batches."""
     logging.info(f"--- Running fetch_bls ---")
-    logging.info(f"Fetching data for {len(series_ids_func)} series from BLS API for {start_year_str_func}-{end_year_str_func}...")
+    logging.info(
+        f"Fetching data for {len(series_ids_func)} series from BLS API for {start_year_str_func}-{end_year_str_func}..."
+    )
     headers = {"Content-type": "application/json"}
     all_series_data = []
     num_series = len(series_ids_func)
@@ -151,36 +155,47 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
 
     for i in range(0, num_series, batch_size):
         current_batch_num = i // batch_size + 1
-        batch_ids = series_ids_func[i:min(i + batch_size, num_series)]
+        batch_ids = series_ids_func[i : min(i + batch_size, num_series)]
         logging.info(f"Requesting batch {current_batch_num}/{max_batches}: {len(batch_ids)} series IDs")
         data_payload = {
             "seriesid": batch_ids,
             "startyear": start_year_str_func,
             "endyear": end_year_str_func,
             "registrationkey": api_key_func,
-            "catalog": False
+            "catalog": False,
         }
         data_json_str = json.dumps(data_payload)
 
         try:
-            response = requests.post("https://api.bls.gov/publicAPI/v2/timeseries/data/", data=data_json_str, headers=headers, timeout=45)
+            response = requests.post(
+                "https://api.bls.gov/publicAPI/v2/timeseries/data/",
+                data=data_json_str,
+                headers=headers,
+                timeout=45,
+            )
             logging.info(f"Batch {current_batch_num}: Response Status Code: {response.status_code}")
 
             if response.status_code != 200:
-                logging.warning(f"Batch {current_batch_num}: Received non-200 status code: {response.status_code}")
-                error_detail_msg = f"API request failed for batch {current_batch_num}. Status: {response.status_code}."
+                logging.warning(
+                    f"Batch {current_batch_num}: Received non-200 status code: {response.status_code}"
+                )
+                error_detail_msg = (
+                    f"API request failed for batch {current_batch_num}. Status: {response.status_code}."
+                )
                 try:
                     error_detail = response.json()
                     logging.warning(f"Batch {current_batch_num}: Error Response Body: {error_detail}")
-                    api_messages = error_detail.get('message', [])
+                    api_messages = error_detail.get("message", [])
                     if api_messages:
                         error_detail_msg += f" Detail: {'; '.join(m for m in api_messages if m)}"
                     elif error_detail:
-                         error_detail_msg += f" Response: {error_detail}"
+                        error_detail_msg += f" Response: {error_detail}"
                     else:
-                         error_detail_msg += f" Body: {response.text[:200]}"
+                        error_detail_msg += f" Body: {response.text[:200]}"
                 except json.JSONDecodeError:
-                    logging.warning(f"Batch {current_batch_num}: Couldn't decode JSON from error response. Body: {response.text[:500]}")
+                    logging.warning(
+                        f"Batch {current_batch_num}: Couldn't decode JSON from error response. Body: {response.text[:500]}"
+                    )
                     error_detail_msg += " Non-JSON response received."
                 st.warning(error_detail_msg)
                 continue
@@ -195,7 +210,9 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
                 st.warning(f"BLS API Error (batch {current_batch_num}): {error_string}")
                 continue
 
-            if "Results" not in response_json or not response_json.get("Results") or "series" not in response_json["Results"]:
+            if "Results" not in response_json or not response_json.get("Results") or "series" not in response_json[
+                "Results"
+            ]:
                 logging.warning(f"No valid 'Results' or 'series' key found for batch {current_batch_num}.")
                 continue
 
@@ -225,27 +242,37 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
                             logging.warning(f"Skipping data point with missing fields: {item} for Series {sid}")
                             continue
                         if period.startswith('Q') or period == "M13":
-                             continue
+                            continue
 
                         val = float(val_str.replace(",", ""))
                         month_num_str = period[1:]
                         date_str = f"{year}-{month_num_str}-01"
                         parsed_date = pd.to_datetime(date_str, format='%Y-%m-%d', errors='coerce')
                         if pd.isna(parsed_date):
-                            logging.warning(f"Skipping data point with unparseable date: {item} for Series {sid}")
+                            logging.warning(
+                                f"Skipping data point with unparseable date: {item} for Series {sid}"
+                            )
                             continue
 
-                        batch_records.append({
-                            "series_id": sid, "label": series_label, "year": int(year),
-                            "period": period, "periodName": periodName, "value": val,
-                            "date": parsed_date
-                        })
+                        batch_records.append(
+                            {
+                                "series_id": sid,
+                                "label": series_label,
+                                "year": int(year),
+                                "period": period,
+                                "periodName": periodName,
+                                "value": val,
+                                "date": parsed_date,
+                            }
+                        )
                     except (ValueError, TypeError, KeyError, AttributeError, IndexError) as e:
-                        logging.warning(f"Skipping data point for series {sid} due to parsing error: {e} - Item: '{item}'")
+                        logging.warning(
+                            f"Skipping data point for series {sid} due to parsing error: {e} - Item: '{item}'"
+                        )
 
-            all_series_data.extend(batch_records)
-            logging.info(f"Processed {len(batch_records)} valid monthly records for batch {current_batch_num}.")
-            time.sleep(0.5)
+                all_series_data.extend(batch_records)
+                logging.info(f"Processed {len(batch_records)} valid monthly records for batch {current_batch_num}.")
+                time.sleep(0.5)
 
         except requests.exceptions.Timeout:
             logging.error(f"Timeout error occurred fetching batch {current_batch_num}.")
@@ -257,8 +284,10 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
         except json.JSONDecodeError as e:
             logging.error(f"Error decoding JSON response for batch {current_batch_num}: {e}")
             response_text = ""
-            try: response_text = response.text[:500]
-            except NameError: pass
+            try:
+                response_text = response.text[:500]
+            except NameError:
+                pass
             logging.error(f"Response Text (start): {response_text}")
             st.error("Error decoding API response. Data fetching failed.")
             return None
@@ -275,10 +304,11 @@ def fetch_bls(series_ids_func, start_year_str_func, end_year_str_func, api_key_f
         logging.info(f"--- fetch_bls finished: Successfully parsed {len(all_series_data)} valid monthly records. ---")
         return pd.DataFrame(all_series_data)
 
+
 # --- Cache Loading Logic ---
 st.sidebar.subheader("Data Cache Status")
 csv_file = "bls_employment_data.csv"
-cache_expiry_days = 1 # Cache expires daily
+cache_expiry_days = 1  # Cache expires daily
 
 df = None
 try:
@@ -299,16 +329,18 @@ try:
             else:
                 required_cols = ['series_id', 'label', 'year', 'period', 'periodName', 'value', 'date']
                 if not all(col in df.columns for col in required_cols):
-                     logging.warning(f"Cache file '{csv_file}' is missing required columns. Deleting.")
-                     st.sidebar.warning(f"Cache file missing columns. Fetching fresh data.")
-                     os.remove(csv_file)
-                     df = None
+                    logging.warning(f"Cache file '{csv_file}' is missing required columns. Deleting.")
+                    st.sidebar.warning(f"Cache file missing columns. Fetching fresh data.")
+                    os.remove(csv_file)
+                    df = None
                 else:
                     max_cached_date = df["date"].max().date()
                     logging.info(f"Cache loaded successfully. Last data point: {max_cached_date}")
                     st.sidebar.success(f"Using cached data.\nLast data: {max_cached_date}")
         else:
-            logging.warning(f"Cache is older than {cache_expiry_days} days ({cache_age_days:.1f} days). Fetching fresh data.")
+            logging.warning(
+                f"Cache is older than {cache_expiry_days} days ({cache_age_days:.1f} days). Fetching fresh data."
+            )
             st.sidebar.warning(f"Cache expired ({cache_age_days:.1f} days old).\nFetching fresh data.")
             df = None
     else:
@@ -319,7 +351,8 @@ try:
 except pd.errors.EmptyDataError:
     logging.warning(f"Cache file '{csv_file}' could not be read (EmptyDataError).")
     st.sidebar.warning(f"Cache file was invalid.\nFetching fresh data.")
-    if os.path.exists(csv_file): os.remove(csv_file)
+    if os.path.exists(csv_file):
+        os.remove(csv_file)
     df = None
 except FileNotFoundError:
     logging.info(f"Cache file '{csv_file}' not found during load attempt.")
@@ -409,17 +442,17 @@ if df is not None and not df.empty:
         initial_rows = len(df)
         df.dropna(subset=['date', 'value', 'year', 'label', 'series_id'], inplace=True)
         if len(df) < initial_rows:
-             logging.info(f"Removed {initial_rows - len(df)} rows due to NaN values in essential columns.")
+            logging.info(f"Removed {initial_rows - len(df)} rows due to NaN values in essential columns.")
 
         initial_rows = len(df)
         df = df[df["value"] > 0].copy()
         if len(df) < initial_rows:
-             logging.info(f"Removed {initial_rows - len(df)} rows with non-positive employment values.")
+            logging.info(f"Removed {initial_rows - len(df)} rows with non-positive employment values.")
 
         if df.empty:
-             st.error("No valid data remaining after initial cleaning. Cannot proceed.")
-             logging.error("DataFrame became empty after initial cleaning steps.")
-             st.stop()
+            st.error("No valid data remaining after initial cleaning. Cannot proceed.")
+            logging.error("DataFrame became empty after initial cleaning steps.")
+            st.stop()
 
         logging.info(f"Dataframe shape after initial cleaning: {df.shape}")
 
@@ -440,25 +473,69 @@ if df is not None and not df.empty:
 
         # --- State Abbreviation Mapping ---
         state_abbrev_map = {
-             "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ", "Arkansas": "AR", "California": "CA",
-             "Colorado": "CO", "Connecticut": "CT", "Delaware": "DE", "District of Columbia": "DC",
-             "Florida": "FL", "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID", "Illinois": "IL",
-             "Indiana": "IN", "Iowa": "IA", "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA",
-             "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA", "Michigan": "MI", "Minnesota": "MN",
-             "Mississippi": "MS", "Missouri": "MO", "Montana": "MT", "Nebraska": "NE", "Nevada": "NV",
-             "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY",
-             "North Carolina": "NC", "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK", "Oregon": "OR",
-             "Pennsylvania": "PA", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD",
-             "Tennessee": "TN", "Texas": "TX", "Utah": "UT", "Vermont": "VT", "Virginia": "VA",
-             "Washington": "WA", "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY"
-         }
+            "Alabama": "AL",
+            "Alaska": "AK",
+            "Arizona": "AZ",
+            "Arkansas": "AR",
+            "California": "CA",
+            "Colorado": "CO",
+            "Connecticut": "CT",
+            "Delaware": "DE",
+            "District of Columbia": "DC",
+            "Florida": "FL",
+            "Georgia": "GA",
+            "Hawaii": "HI",
+            "Idaho": "ID",
+            "Illinois": "IL",
+            "Indiana": "IN",
+            "Iowa": "IA",
+            "Kansas": "KS",
+            "Kentucky": "KY",
+            "Louisiana": "LA",
+            "Maine": "ME",
+            "Maryland": "MD",
+            "Massachusetts": "MA",
+            "Michigan": "MI",
+            "Minnesota": "MN",
+            "Mississippi": "MS",
+            "Missouri": "MO",
+            "Montana": "MT",
+            "Nebraska": "NE",
+            "Nevada": "NV",
+            "New Hampshire": "NH",
+            "New Jersey": "NJ",
+            "New Mexico": "NM",
+            "New York": "NY",
+            "North Carolina": "NC",
+            "North Dakota": "ND",
+            "Ohio": "OH",
+            "Oklahoma": "OK",
+            "Oregon": "OR",
+            "Pennsylvania": "PA",
+            "Rhode Island": "RI",
+            "South Carolina": "SC",
+            "South Dakota": "SD",
+            "Tennessee": "TN",
+            "Texas": "TX",
+            "Utah": "UT",
+            "Vermont": "VT",
+            "Virginia": "VA",
+            "Washington": "WA",
+            "West Virginia": "WV",
+            "Wisconsin": "WI",
+            "Wyoming": "WY",
+        }
         df["state_full"] = df["label"].str.extract(r"^([a-zA-Z\s\.]+?)\s+-\s+Total Nonfarm$", expand=False).str.strip()
         df["state_abbrev"] = df["state_full"].map(state_abbrev_map)
         logging.info("Attempted to extract state abbreviations.")
         state_rows_mask = df['state_full'].notna()
         logging.info(f"Total rows matching state pattern: {state_rows_mask.sum()}")
-        logging.info(f"State rows successfully mapped to abbreviation: {df.loc[state_rows_mask, 'state_abbrev'].notna().sum()}")
-        logging.info(f"State rows UNABLE to map to abbreviation: {df.loc[state_rows_mask, 'state_abbrev'].isnull().sum()}")
+        logging.info(
+            f"State rows successfully mapped to abbreviation: {df.loc[state_rows_mask, 'state_abbrev'].notna().sum()}"
+        )
+        logging.info(
+            f"State rows UNABLE to map to abbreviation: {df.loc[state_rows_mask, 'state_abbrev'].isnull().sum()}"
+        )
 
         # Identify National Series
         df['is_national'] = df['series_id'].isin(national_industry_map.keys())
@@ -490,7 +567,9 @@ def add_forecast(df_subset, months=6):
     df_subset["ts_int"] = np.arange(len(df_subset))
     subset_clean = df_subset.dropna(subset=['ts_int', 'value'])
     if len(subset_clean) < 2:
-        logging.warning(f"Skipping forecast for '{label_name}': Not enough clean data points for model ({len(subset_clean)}).")
+        logging.warning(
+            f"Skipping forecast for '{label_name}': Not enough clean data points for model ({len(subset_clean)})."
+        )
         df_subset["forecast"] = False
         return df_subset
 
@@ -517,14 +596,21 @@ def add_forecast(df_subset, months=6):
         future_preds[future_preds < 0] = 0
 
         future_data = {
-            "date": future_dates, "value": future_preds, "label": label_name,
+            "date": future_dates,
+            "value": future_preds,
+            "label": label_name,
             "forecast": True,
             "series_id": df_subset["series_id"].iloc[0] if 'series_id' in df_subset.columns else None,
-            "state_full": df_subset["state_full"].iloc[0] if 'state_full' in df_subset.columns and pd.notna(df_subset["state_full"].iloc[0]) else None,
-            "state_abbrev": df_subset["state_abbrev"].iloc[0] if 'state_abbrev' in df_subset.columns and pd.notna(df_subset["state_abbrev"].iloc[0]) else None,
+            "state_full": df_subset["state_full"].iloc[0]
+            if 'state_full' in df_subset.columns and pd.notna(df_subset["state_full"].iloc[0])
+            else None,
+            "state_abbrev": df_subset["state_abbrev"].iloc[0]
+            if 'state_abbrev' in df_subset.columns and pd.notna(df_subset["state_abbrev"].iloc[0])
+            else None,
             "is_national": df_subset["is_national"].iloc[0] if 'is_national' in df_subset.columns else None,
-            "year": future_dates.year, "periodName": future_dates.strftime('%B'),
-            "period": future_dates.strftime('M%m')
+            "year": future_dates.year,
+            "periodName": future_dates.strftime('%B'),
+            "period": future_dates.strftime('M%m'),
         }
         df_future = pd.DataFrame(future_data)
         df_subset["forecast"] = False
@@ -545,7 +631,7 @@ def add_forecast(df_subset, months=6):
 # ---------------------------
 if df is not None and not df.empty:
     logging.info("--- Starting UI and Visuals ---")
-    try: # Main try block for UI
+    try:  # Main try block for UI
         latest_date_overall = df['date'].max()
 
         # --- State Analysis Section ---
@@ -556,8 +642,10 @@ if df is not None and not df.empty:
             st.warning("No state-level 'Total Nonfarm' data found to display.")
         else:
             state_label = st.selectbox(
-                "Select a State:", state_labels_available, key="state_selector",
-                help="Choose a state to view detailed trends and forecasts."
+                "Select a State:",
+                state_labels_available,
+                key="state_selector",
+                help="Choose a state to view detailed trends and forecasts.",
             )
 
             if state_label:
@@ -566,7 +654,13 @@ if df is not None and not df.empty:
                     state_df_forecast = add_forecast(state_df_orig, months=6)
 
                     st.subheader(f"Key Indicators: {state_label}")
-                    latest_actual_data = state_df_forecast[(state_df_forecast['forecast'] == False) & pd.notna(state_df_forecast['value'])].sort_values(by='date').iloc[-1] if not state_df_forecast[state_df_forecast['forecast'] == False].empty else None
+                    latest_actual_data = (
+                        state_df_forecast[(state_df_forecast['forecast'] == False) & pd.notna(state_df_forecast['value'])]
+                        .sort_values(by='date')
+                        .iloc[-1]
+                        if not state_df_forecast[state_df_forecast['forecast'] == False].empty
+                        else None
+                    )
 
                     if latest_actual_data is not None:
                         latest_date_str = latest_actual_data['date'].strftime('%B %Y')
@@ -576,36 +670,73 @@ if df is not None and not df.empty:
                         yoy_diff = latest_actual_data.get('value_yoy_diff', None)
                         yoy_pct = latest_actual_data.get('value_yoy_pct_change', None)
 
-                        first_forecast_data = state_df_forecast[state_df_forecast['forecast'] == True].sort_values(by='date').iloc[0] if not state_df_forecast[state_df_forecast['forecast'] == True].empty else None
+                        first_forecast_data = (
+                            state_df_forecast[state_df_forecast['forecast'] == True]
+                            .sort_values(by='date')
+                            .iloc[0]
+                            if not state_df_forecast[state_df_forecast['forecast'] == True].empty
+                            else None
+                        )
                         forecast_val = first_forecast_data.get('value', None) if first_forecast_data is not None else None
-                        forecast_date_str = first_forecast_data['date'].strftime('%B %Y') if first_forecast_data is not None else "N/A"
+                        forecast_date_str = (
+                            first_forecast_data['date'].strftime('%B %Y') if first_forecast_data is not None else "N/A"
+                        )
 
                         col_m1, col_m2, col_m3, col_m4 = st.columns(4)
-                        col_m1.metric("Latest Employment", f"{latest_val:,.1f}K", help=f"Latest actual data ({latest_date_str})")
-                        col_m2.metric("MoM Change", f"{mom_diff:+,.1f}K" if mom_diff is not None else "N/A", f"{mom_pct:+.2f}%" if mom_pct is not None else "", help="Month-over-Month Change vs Previous Month")
-                        col_m3.metric("YoY Change", f"{yoy_diff:+,.1f}K" if yoy_diff is not None else "N/A", f"{yoy_pct:+.2f}%" if yoy_pct is not None else "", help="Year-over-Year Change vs Same Month Previous Year")
-                        col_m4.metric("Next Month Forecast", f"{forecast_val:,.1f}K" if forecast_val is not None else "N/A", help=f"Simple linear forecast for {forecast_date_str}")
+                        col_m1.metric(
+                            "Latest Employment",
+                            f"{latest_val:,.1f}K",
+                            help=f"Latest actual data ({latest_date_str})",
+                        )
+                        col_m2.metric(
+                            "MoM Change",
+                            f"{mom_diff:+,.1f}K" if mom_diff is not None else "N/A",
+                            f"{mom_pct:+.2f}%" if mom_pct is not None else "",
+                            help="Month-over-Month Change vs Previous Month",
+                        )
+                        col_m3.metric(
+                            "YoY Change",
+                            f"{yoy_diff:+,.1f}K" if yoy_diff is not None else "N/A",
+                            f"{yoy_pct:+.2f}%" if yoy_pct is not None else "",
+                            help="Year-over-Year Change vs Same Month Previous Year",
+                        )
+                        col_m4.metric(
+                            "Next Month Forecast",
+                            f"{forecast_val:,.1f}K" if forecast_val is not None else "N/A",
+                            help=f"Simple linear forecast for {forecast_date_str}",
+                        )
                     else:
                         st.warning("Could not retrieve latest data points for key indicators.")
 
                     st.subheader(f"Employment Trend & Forecast")
                     fig_state_line = px.line(
-                        state_df_forecast, x='date', y='value', color='forecast',
-                        labels={'date': 'Date', 'value': 'Employment (Thousands)', 'forecast': 'Data Type'}, markers=False
+                        state_df_forecast,
+                        x='date',
+                        y='value',
+                        color='forecast',
+                        labels={'date': 'Date', 'value': 'Employment (Thousands)', 'forecast': 'Data Type'},
+                        markers=False,
                     )
                     fig_state_line.update_traces(
-                        hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%B %Y}<br>Employment: %{y:,.1f}K<extra></extra>", connectgaps=False
+                        hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%B %Y}<br>Employment: %{y:,.1f}K<extra></extra>",
+                        connectgaps=False,
                     )
                     fig_state_line.update_layout(legend_title_text='Data Type', hovermode="x unified")
                     st.plotly_chart(fig_state_line, use_container_width=True)
 
                     st.subheader(f"Monthly % Change")
-                    state_df_actual_mom = state_df_forecast[(state_df_forecast['forecast'] == False) & state_df_forecast['value_pct_change'].notna()].copy()
+                    state_df_actual_mom = state_df_forecast[
+                        (state_df_forecast['forecast'] == False) & state_df_forecast['value_pct_change'].notna()
+                    ].copy()
                     fig_state_bar = px.bar(
-                        state_df_actual_mom, x='date', y='value_pct_change',
-                        labels={'date': 'Date', 'value_pct_change': 'MoM % Change'}
+                        state_df_actual_mom,
+                        x='date',
+                        y='value_pct_change',
+                        labels={'date': 'Date', 'value_pct_change': 'MoM % Change'},
                     )
-                    fig_state_bar.update_traces(hovertemplate="Date: %{x|%B %Y}<br>MoM Change: %{y:.2f}%<extra></extra>")
+                    fig_state_bar.update_traces(
+                        hovertemplate="Date: %{x|%B %Y}<br>MoM Change: %{y:.2f}%<extra></extra>"
+                    )
                     fig_state_bar.update_layout(hovermode="x unified")
                     st.plotly_chart(fig_state_bar, use_container_width=True)
 
@@ -622,7 +753,7 @@ if df is not None and not df.empty:
         try:
             # === CORRECTED MAP DATA SELECTION ===
             # 1. Filter the DataFrame for state rows FIRST
-            df_states_only = df[df['state_abbrev'].notna()].copy() # Use .copy()
+            df_states_only = df[df['state_abbrev'].notna()].copy()  # Use .copy()
 
             if not df_states_only.empty:
                 # 2. Find the index of the latest date *within the filtered state DataFrame*
@@ -630,7 +761,7 @@ if df is not None and not df.empty:
                 # 3. Select the latest rows using the valid indices
                 latest_state_data = df_states_only.loc[latest_state_indices]
             else:
-                latest_state_data = pd.DataFrame() # Handle empty case
+                latest_state_data = pd.DataFrame()  # Handle empty case
             # === END OF FIX ===
 
             # Ensure we have the MoM % change calculated for these latest points
@@ -642,10 +773,15 @@ if df is not None and not df.empty:
                 st.markdown(f"*(Showing data for: {map_latest_date_str})*")
 
                 fig_map = px.choropleth(
-                   latest_state_data, locations='state_abbrev', locationmode='USA-states',
-                   color='value_pct_change', scope='usa', color_continuous_scale="RdYlGn",
-                   range_color=[-2, 2], hover_name='state_full',
-                   hover_data={'state_abbrev': False, 'value_pct_change': ':.2f%'}
+                    latest_state_data,
+                    locations='state_abbrev',
+                    locationmode='USA-states',
+                    color='value_pct_change',
+                    scope='usa',
+                    color_continuous_scale="RdYlGn",
+                    range_color=[-2, 2],
+                    hover_name='state_full',
+                    hover_data={'state_abbrev': False, 'value_pct_change': ':.2f%'},
                 )
                 fig_map.update_layout(coloraxis_colorbar=dict(title="MoM % Change"))
                 st.plotly_chart(fig_map, use_container_width=True)
@@ -655,7 +791,7 @@ if df is not None and not df.empty:
         except Exception as map_e:
             st.error(f"An error occurred while generating the state comparison map: {map_e}")
             logging.error(f"Error generating map: {map_e}")
-            traceback.print_exc() # Log the full error for debugging
+            traceback.print_exc()  # Log the full error for debugging
 
         st.divider()
 
@@ -667,8 +803,10 @@ if df is not None and not df.empty:
             st.warning("No national industry data found to display.")
         else:
             national_label = st.selectbox(
-                "Select a National Series:", national_labels_available, key="national_selector",
-                help="Choose a national industry or aggregate series."
+                "Select a National Series:",
+                national_labels_available,
+                key="national_selector",
+                help="Choose a national industry or aggregate series.",
             )
 
             if national_label:
@@ -677,7 +815,13 @@ if df is not None and not df.empty:
                     nat_df_forecast = add_forecast(nat_df_orig, months=6)
 
                     st.subheader(f"Key Indicators: {national_label}")
-                    latest_actual_data_nat = nat_df_forecast[(nat_df_forecast['forecast'] == False) & pd.notna(nat_df_forecast['value'])].sort_values(by='date').iloc[-1] if not nat_df_forecast[nat_df_forecast['forecast'] == False].empty else None
+                    latest_actual_data_nat = (
+                        nat_df_forecast[(nat_df_forecast['forecast'] == False) & pd.notna(nat_df_forecast['value'])]
+                        .sort_values(by='date')
+                        .iloc[-1]
+                        if not nat_df_forecast[nat_df_forecast['forecast'] == False].empty
+                        else None
+                    )
 
                     if latest_actual_data_nat is not None:
                         latest_date_str_nat = latest_actual_data_nat['date'].strftime('%B %Y')
@@ -687,36 +831,75 @@ if df is not None and not df.empty:
                         yoy_diff_nat = latest_actual_data_nat.get('value_yoy_diff', None)
                         yoy_pct_nat = latest_actual_data_nat.get('value_yoy_pct_change', None)
 
-                        first_forecast_data_nat = nat_df_forecast[nat_df_forecast['forecast'] == True].sort_values(by='date').iloc[0] if not nat_df_forecast[nat_df_forecast['forecast'] == True].empty else None
-                        forecast_val_nat = first_forecast_data_nat.get('value', None) if first_forecast_data_nat is not None else None
-                        forecast_date_str_nat = first_forecast_data_nat['date'].strftime('%B %Y') if first_forecast_data_nat is not None else "N/A"
+                        first_forecast_data_nat = (
+                            nat_df_forecast[nat_df_forecast['forecast'] == True]
+                            .sort_values(by='date')
+                            .iloc[0]
+                            if not nat_df_forecast[nat_df_forecast['forecast'] == True].empty
+                            else None
+                        )
+                        forecast_val_nat = (
+                            first_forecast_data_nat.get('value', None) if first_forecast_data_nat is not None else None
+                        )
+                        forecast_date_str_nat = (
+                            first_forecast_data_nat['date'].strftime('%B %Y') if first_forecast_data_nat is not None else "N/A"
+                        )
 
                         col_n1, col_n2, col_n3, col_n4 = st.columns(4)
-                        col_n1.metric("Latest Employment", f"{latest_val_nat:,.1f}K", help=f"Latest actual data ({latest_date_str_nat})")
-                        col_n2.metric("MoM Change", f"{mom_diff_nat:+,.1f}K" if mom_diff_nat is not None else "N/A", f"{mom_pct_nat:+.2f}%" if mom_pct_nat is not None else "", help="Month-over-Month Change vs Previous Month")
-                        col_n3.metric("YoY Change", f"{yoy_diff_nat:+,.1f}K" if yoy_diff_nat is not None else "N/A", f"{yoy_pct_nat:+.2f}%" if yoy_pct_nat is not None else "", help="Year-over-Year Change vs Same Month Previous Year")
-                        col_n4.metric("Next Month Forecast", f"{forecast_val_nat:,.1f}K" if forecast_val_nat is not None else "N/A", help=f"Simple linear forecast for {forecast_date_str_nat}")
+                        col_n1.metric(
+                            "Latest Employment",
+                            f"{latest_val_nat:,.1f}K",
+                            help=f"Latest actual data ({latest_date_str_nat})",
+                        )
+                        col_n2.metric(
+                            "MoM Change",
+                            f"{mom_diff_nat:+,.1f}K" if mom_diff_nat is not None else "N/A",
+                            f"{mom_pct_nat:+.2f}%" if mom_pct_nat is not None else "",
+                            help="Month-over-Month Change vs Previous Month",
+                        )
+                        col_n3.metric(
+                            "YoY Change",
+                            f"{yoy_diff_nat:+,.1f}K" if yoy_diff_nat is not None else "N/A",
+                            f"{yoy_pct_nat:+.2f}%" if yoy_pct_nat is not None else "",
+                            help="Year-over-Year Change vs Same Month Previous Year",
+                        )
+                        col_n4.metric(
+                            "Next Month Forecast",
+                            f"{forecast_val_nat:,.1f}K" if forecast_val_nat is not None else "N/A",
+                            help=f"Simple linear forecast for {forecast_date_str_nat}",
+                        )
                     else:
                         st.warning("Could not retrieve latest data points for national key indicators.")
 
                     st.subheader(f"Trend & Forecast")
                     fig_nat_line = px.line(
-                        nat_df_forecast, x='date', y='value', color='forecast',
-                        labels={'date': 'Date', 'value': 'Employment (Thousands)', 'forecast': 'Data Type'}, markers=False
+                        nat_df_forecast,
+                        x='date',
+                        y='value',
+                        color='forecast',
+                        labels={'date': 'Date', 'value': 'Employment (Thousands)', 'forecast': 'Data Type'},
+                        markers=False,
                     )
                     fig_nat_line.update_traces(
-                        hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%B %Y}<br>Employment: %{y:,.1f}K<extra></extra>", connectgaps=False
+                        hovertemplate="<b>%{fullData.name}</b><br>Date: %{x|%B %Y}<br>Employment: %{y:,.1f}K<extra></extra>",
+                        connectgaps=False,
                     )
                     fig_nat_line.update_layout(legend_title_text='Data Type', hovermode="x unified")
                     st.plotly_chart(fig_nat_line, use_container_width=True)
 
                     st.subheader(f"Monthly % Change")
-                    nat_df_actual_mom = nat_df_forecast[(nat_df_forecast['forecast'] == False) & nat_df_forecast['value_pct_change'].notna()].copy()
+                    nat_df_actual_mom = nat_df_forecast[
+                        (nat_df_forecast['forecast'] == False) & nat_df_forecast['value_pct_change'].notna()
+                    ].copy()
                     fig_nat_bar = px.bar(
-                        nat_df_actual_mom, x='date', y='value_pct_change',
-                        labels={'date': 'Date', 'value_pct_change': 'MoM % Change'}
+                        nat_df_actual_mom,
+                        x='date',
+                        y='value_pct_change',
+                        labels={'date': 'Date', 'value_pct_change': 'MoM % Change'},
                     )
-                    fig_nat_bar.update_traces(hovertemplate="Date: %{x|%B %Y}<br>MoM Change: %{y:.2f}%<extra></extra>")
+                    fig_nat_bar.update_traces(
+                        hovertemplate="Date: %{x|%B %Y}<br>MoM Change: %{y:.2f}%<extra></extra>"
+                    )
                     fig_nat_bar.update_layout(hovermode="x unified")
                     st.plotly_chart(fig_nat_bar, use_container_width=True)
 
@@ -729,33 +912,35 @@ if df is not None and not df.empty:
 
         # --- Interpretation Section ---
         with st.expander("Interpreting the Dashboard", expanded=False):
-            st.markdown("""
-            This dashboard presents U.S. employment data from the Bureau of Labor Statistics (BLS). Here's how to interpret the different components:
+            st.markdown(
+                """
+                This dashboard presents U.S. employment data from the Bureau of Labor Statistics (BLS). Here's how to interpret the different components:
 
-            **1. Key Indicators:**
-            * **Latest Employment:** The total nonfarm employment figure (in thousands) for the most recent month available in the selected series.
-            * **MoM Change:** The change (Month-over-Month) in employment (absolute thousands and percentage) from the previous month. Positive values indicate growth; negative values indicate decline.
-            * **YoY Change:** The change (Year-over-Year) in employment (absolute thousands and percentage) compared to the same month in the previous year. This helps identify longer-term trends, smoothing out monthly volatility.
-            * **Next Month Forecast:** A simple estimate of the employment level for the next month, based on a linear regression of the historical data. **Note:** This is a basic projection and may not capture complex economic factors or seasonality accurately.
+                **1. Key Indicators:**
+                * **Latest Employment:** The total nonfarm employment figure (in thousands) for the most recent month available in the selected series.
+                * **MoM Change:** The change (Month-over-Month) in employment (absolute thousands and percentage) from the previous month. Positive values indicate growth; negative values indicate decline.
+                * **YoY Change:** The change (Year-over-Year) in employment (absolute thousands and percentage) compared to the same month in the previous year. This helps identify longer-term trends, smoothing out monthly volatility.
+                * **Next Month Forecast:** A simple estimate of the employment level for the next month, based on a linear regression of the historical data. **Note:** This is a basic projection and may not capture complex economic factors or seasonality accurately.
 
-            **2. Employment Trend & Forecast Chart (Line Chart):**
-            * **Y-axis:** Represents Total Employment (in thousands) for the selected series.
-            * **X-axis:** Represents the date (monthly).
-            * **Solid Line:** Shows the historical employment data over time. Observe the slope to see general trends (upward slope indicates growth, downward indicates decline).
-            * **Dashed Line:** Shows the simple linear forecast for the next six months based on the historical trend.
+                **2. Employment Trend & Forecast Chart (Line Chart):**
+                * **Y-axis:** Represents Total Employment (in thousands) for the selected series.
+                * **X-axis:** Represents the date (monthly).
+                * **Solid Line:** Shows the historical employment data over time. Observe the slope to see general trends (upward slope indicates growth, downward indicates decline).
+                * **Dashed Line:** Shows the simple linear forecast for the next six months based on the historical trend.
 
-            **3. Monthly % Change Chart (Bar Chart):**
-            * **Y-axis:** Represents the percentage change in employment compared to the *previous* month.
-            * **X-axis:** Represents the date (monthly).
-            * **Bars above zero:** Indicate months where employment grew compared to the prior month.
-            * **Bars below zero:** Indicate months where employment declined compared to the prior month. The height of the bar shows the magnitude of the change.
+                **3. Monthly % Change Chart (Bar Chart):**
+                * **Y-axis:** Represents the percentage change in employment compared to the *previous* month.
+                * **X-axis:** Represents the date (monthly).
+                * **Bars above zero:** Indicate months where employment grew compared to the prior month.
+                * **Bars below zero:** Indicate months where employment declined compared to the prior month. The height of the bar shows the magnitude of the change.
 
-            **4. State Comparison Map (Chloropleth Map):**
-            * This map visualizes the most recent Month-over-Month (MoM) percentage change in employment for all available states simultaneously.
-            * **Color:** Each state is colored based on its MoM % change value. Refer to the color scale legend on the map (typically green shades indicate growth, red shades indicate decline, with intensity showing magnitude) to compare performance across states for the latest month.
+                **4. State Comparison Map (Chloropleth Map):**
+                * This map visualizes the most recent Month-over-Month (MoM) percentage change in employment for all available states simultaneously.
+                * **Color:** Each state is colored based on its MoM % change value. Refer to the color scale legend on the map (typically green shades indicate growth, red shades indicate decline, with intensity showing magnitude) to compare performance across states for the latest month.
 
-            *The interpretations above apply similarly to both the "State Employment Analysis" and the "National Industry Analysis" sections.*
-            """)
+                *The interpretations above apply similarly to both the "State Employment Analysis" and the "National Industry Analysis" sections.*
+                """
+            )
 
         st.divider()
 
@@ -766,31 +951,49 @@ if df is not None and not df.empty:
             latest_nat_data = latest_nat_data.sort_values(by='label')
 
             if not latest_nat_data.empty:
-                 latest_date_nat_str = latest_date_overall.strftime('%B %Y')
-                 st.caption(f"Showing national industry data for the latest available month: {latest_date_nat_str}")
+                latest_date_nat_str = latest_date_overall.strftime('%B %Y')
+                st.caption(f"Showing national industry data for the latest available month: {latest_date_nat_str}")
 
-                 display_cols = ['label', 'value', 'value_diff', 'value_pct_change', 'value_yoy_diff', 'value_yoy_pct_change']
-                 latest_nat_display = latest_nat_data[display_cols].rename(columns={
-                     'label': 'Industry', 'value': 'Employment (K)',
-                     'value_diff': 'MoM Diff (K)', 'value_pct_change': 'MoM % Change',
-                     'value_yoy_diff': 'YoY Diff (K)', 'value_yoy_pct_change': 'YoY % Change'
-                 })
+                display_cols = [
+                    'label',
+                    'value',
+                    'value_diff',
+                    'value_pct_change',
+                    'value_yoy_diff',
+                    'value_yoy_pct_change',
+                ]
+                latest_nat_display = latest_nat_data[display_cols].rename(
+                    columns={
+                        'label': 'Industry',
+                        'value': 'Employment (K)',
+                        'value_diff': 'MoM Diff (K)',
+                        'value_pct_change': 'MoM % Change',
+                        'value_yoy_diff': 'YoY Diff (K)',
+                        'value_yoy_pct_change': 'YoY % Change',
+                    }
+                )
 
-                 st.dataframe(latest_nat_display, use_container_width=True, hide_index=True,
-                              column_config={
-                                  "Employment (K)": st.column_config.NumberColumn(format="%.1f"),
-                                  "MoM Diff (K)": st.column_config.NumberColumn(format="%+.1f"),
-                                  "MoM % Change": st.column_config.NumberColumn(format="%+.2f%%"),
-                                  "YoY Diff (K)": st.column_config.NumberColumn(format="%+.1f"),
-                                  "YoY % Change": st.column_config.NumberColumn(format="%+.2f%%"),
-                              })
+                st.dataframe(
+                    latest_nat_display,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Employment (K)": st.column_config.NumberColumn(format="%.1f"),
+                        "MoM Diff (K)": st.column_config.NumberColumn(format="%+.1f"),
+                        "MoM % Change": st.column_config.NumberColumn(format="%+.2f%%"),
+                        "YoY Diff (K)": st.column_config.NumberColumn(format="%+.1f"),
+                        "YoY % Change": st.column_config.NumberColumn(format="%+.2f%%"),
+                    },
+                )
             else:
-                 st.warning(f"No national industry data found for the latest date ({latest_date_overall.strftime('%B %Y')}).")
+                st.warning(
+                    f"No national industry data found for the latest date ({latest_date_overall.strftime('%B %Y')})."
+                )
 
         except Exception as table_e:
-             st.error(f"Error displaying latest national data table: {table_e}")
-             logging.error(f"Error generating latest national table: {table_e}")
-             traceback.print_exc()
+            st.error(f"Error displaying latest national data table: {table_e}")
+            logging.error(f"Error generating latest national table: {table_e}")
+            traceback.print_exc()
 
     # --- Main Exception Handler for UI ---
     except Exception as ui_error:
@@ -800,9 +1003,9 @@ if df is not None and not df.empty:
         st.warning("Some parts of the dashboard might not be displayed correctly.")
 
 elif df is None:
-     logging.error("UI: Skipping UI build because df is None.")
+    logging.error("UI: Skipping UI build because df is None.")
 else:
-     logging.warning("UI: Skipping UI build because DataFrame is empty.")
-     st.warning("No data available to display after loading and cleaning.")
+    logging.warning("UI: Skipping UI build because DataFrame is empty.")
+    st.warning("No data available to display after loading and cleaning.")
 
 logging.info("--- Streamlit script execution finished ---")
