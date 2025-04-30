@@ -118,7 +118,7 @@ all_series_map = {**state_series_map, **national_industry_map}
 # --- Data Loading Function ---
 @st.cache_data(ttl=21600)
 def fetch_bls(series_ids, start_year, end_year, api_key):
-    ...  # No changes to the function here
+    pass  # No changes to the function here
 
 # --- Forecast Explanation ---
 st.caption("Note: Forecasts shown are based on simple linear projections using the past employment trend. These are best for short-term exploration and do not account for seasonality or macroeconomic shifts.")
@@ -157,3 +157,20 @@ if df is None:
             st.sidebar.success(f"Fetched and cached new data. Last updated: {last_updated.strftime('%B %d, %Y')}")
         except Exception as e:
             logging.error(f"Could not save cache: {e}")
+
+# --- Display Basic Visualization to Confirm Data Load ---
+if df is not None and not df.empty:
+    st.header("Quick Preview: National Employment")
+    national_df = df[df['series_id'] == 'CEU0000000001'].sort_values("date")
+    if not national_df.empty:
+        fig = px.line(
+            national_df,
+            x="date",
+            y="value",
+            title="Total Nonfarm Employment - National",
+            labels={"value": "Employment", "date": "Date"},
+        )
+        st.plotly_chart(fig, use_container_width=True)
+        st.dataframe(national_df.tail(12), use_container_width=True)
+else:
+    st.warning("No data available to display. Please check the cache or API availability.")
