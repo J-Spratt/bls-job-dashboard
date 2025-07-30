@@ -24,6 +24,7 @@ st.set_page_config(layout="wide", page_title="U.S. Job Trends Dashboard")
 st.markdown("<h1 style='text-align: center;'>U.S. Job Trends Dashboard</h1>", unsafe_allow_html=True)
 st.caption("Visualizing Total Nonfarm Employment trends and forecasts by state and selected national industries using BLS data. "
            "Forecasts are based on simple linear projections.")
+st.info("ℹ️ **Data Source Note**: This dashboard uses BLS API data, which may occasionally differ from published state employment reports due to different update schedules and methodologies. Both sources are official BLS data.")
 
 # --- Load BLS API Key ---
 api_key = None
