@@ -249,7 +249,9 @@ st.sidebar.subheader("Data Management")
 
 # Cache status and controls
 csv_file = "bls_employment_data.csv"
-cache_expiry_hours = 1  # Cache expires hourly for more frequent updates
+# Update cache every 2 weeks instead of 1 hour during non-release periods
+# But check daily during release weeks (3rd week of month)
+cache_expiry_hours = 336  # 2 weeks = 14 days * 24 hours Cache expires hourly for more frequent updates
 
 # Add cache clearing button
 if st.sidebar.button("🔄 Clear Cache & Refresh", help="Force refresh data from BLS API"):
