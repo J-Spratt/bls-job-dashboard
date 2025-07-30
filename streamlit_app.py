@@ -482,7 +482,7 @@ def add_forecast(df_subset, months=6):
         return df_combined
 
     except Exception as forecast_pred_e:
-        st.error(f"Error predicting forecast for '{label_name}': forecast_pred_e}")
+        st.error(f"Error predicting forecast for '{label_name}': {forecast_pred_e}")
         df_subset["forecast"] = False
         return df_subset
 
